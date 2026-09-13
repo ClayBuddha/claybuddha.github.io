@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SST Global Monitor · 全球固态变压器信息监控平台</title>
+<style>
+:root{
+  --bg:#F7F4EF; --card:#FFFFFF;
+  --line:#EAE3D8; --line2:#DDD3C2;
+  --txt:#2B2620; --body:#5F574B; --dim:#8A8175; --dim2:#A79C8D;
+  --red:#C0392B; --red-soft:#F6E8E5;
+  --amber-bg:#FBF3DC; --amber:#D9A441; --amber-txt:#6B5F3F;
+  --green:#2E7D4F;
+  --ink:#241F19;
+  --shadow:0 1px 2px rgba(43,38,32,.05),0 4px 14px rgba(43,38,32,.05);
+  --shadow-hover:0 2px 6px rgba(43,38,32,.06),0 10px 24px rgba(43,38,32,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.75;
+  min-height:100vh;
+}
+a{color:var(--txt);text-decoration:none}
+a:hover{color:var(--red)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+.num,.mono,.date-badge,.tab .cnt,.feed-head .cnt,.hl-card .meta{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{
+  background:#fff;border-bottom:1px solid var(--line);
+  box-shadow:0 1px 6px rgba(43,38,32,.04);
+  position:sticky;top:0;z-index:50;
+}
+.hd-in{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:13px 18px;max-width:1180px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:12px}
+.logo .mark{
+  width:38px;height:38px;border-radius:9px;background:var(--ink);flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px rgba(43,38,32,.18);
+}
+.logo .mark .bolt{color:var(--red);font-size:19px;line-height:1}
+.logo h1{font-size:18px;font-weight:800;letter-spacing:.3px;line-height:1.3;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.logo h1 .en{font-family:-apple-system,BlinkMacSystemFont,"SF Mono",Menlo,Consolas,monospace}
+.logo h1 .cn{font-size:13px;font-weight:600;color:var(--dim)}
+.logo .sub{font-size:10.5px;color:var(--dim2);letter-spacing:2.5px;margin-top:2px}
+.hd-meta{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12.5px;color:var(--dim);align-items:center}
+.hd-meta b{color:var(--txt);font-weight:600}
+.hd-meta .mono{font-family:"SF Mono",Menlo,Consolas,monospace}
+.live-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#fff;border:1px solid var(--line2);border-radius:999px;
+  padding:3px 11px;font-size:12px;font-weight:600;color:var(--txt);
+}
+.live-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(46,125,79,.14)}
+.tag-freq{border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--dim);background:#fff}
+
+/* ---------- stat bar ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 8px}
+.stat{
+  background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;
+  box-shadow:var(--shadow);
+}
+.stat::before{content:"";position:absolute;left:-1px;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--line2)}
+.stat.s-total::before{background:var(--red)}
+.stat .num{font-size:28px;font-weight:800;font-family:"SF Mono",Menlo,Consolas,monospace;line-height:1.15}
+.stat.s-total .num{color:var(--red)}
+.stat .lbl{font-size:12.5px;color:var(--dim);margin-top:2px}
+.stat .num small{font-size:13px;color:var(--dim);font-weight:500}
+
+/* ---------- headlines ---------- */
+.section-title{display:flex;align-items:baseline;gap:10px;margin:28px 0 0;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.section-title h2{font-size:17px;font-weight:800}
+.section-title h2 .diamond{color:var(--red)}
+.section-title .hint{font-size:12px;color:var(--dim2)}
+.hl-scroll{display:flex;gap:14px;overflow-x:auto;padding:14px 2px 16px;scroll-snap-type:x mandatory}
+.hl-scroll::-webkit-scrollbar{height:8px}
+.hl-scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.hl-card{
+  scroll-snap-align:start;flex:0 0 340px;max-width:86vw;
+  background:var(--card);
+  border:1px solid var(--line);border-left:3px solid var(--red);border-radius:10px;
+  padding:16px 16px 14px;position:relative;box-shadow:var(--shadow);
+  transition:transform .15s ease, box-shadow .15s ease;
+  display:flex;flex-direction:column;
+}
+.hl-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.hl-card .badge{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;
+  background:var(--red);
+  border-radius:4px;padding:1px 8px;margin-bottom:8px;width:max-content;
+}
+.hl-card .sec-tag{position:absolute;top:14px;right:14px;font-size:11px;color:var(--dim2)}
+.hl-card h3{font-size:14.5px;line-height:1.6;margin-bottom:8px;font-weight:700}
+.hl-card h3 a{color:var(--txt)}
+.hl-card h3 a:hover{color:var(--red)}
+.hl-card p{font-size:13px;line-height:1.7;color:var(--body);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.hl-card .meta{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--dim2);display:flex;justify-content:space-between;gap:8px}
+
+/* ---------- controls ---------- */
+.controls{
+  position:sticky;top:65px;z-index:40;
+  background:rgba(247,244,239,.94);backdrop-filter:blur(8px);
+  padding:12px 0;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{
+  border:none;background:none;color:var(--dim);
+  border-bottom:2px solid transparent;
+  padding:6px 12px 7px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;
+}
+.tab:hover{color:var(--txt)}
+.tab .cnt{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11.5px;color:var(--dim2);margin-left:5px}
+.tab.active{color:var(--red);border-bottom-color:var(--red)}
+.tab.active .cnt{color:var(--red)}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{
+  width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;
+  color:var(--txt);padding:8px 34px 8px 13px;font-size:13.5px;outline:none;
+}
+.search-box input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.08)}
+.search-box .clear{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--dim2);cursor:pointer;font-size:15px;display:none;
+}
+.range-toggle{display:flex;gap:6px}
+.range-btn{
+  border:1px solid var(--line);background:#fff;color:var(--dim);
+  border-radius:8px;padding:6px 13px;font-size:12.5px;cursor:pointer;transition:.15s;
+}
+.range-btn:hover{color:var(--txt)}
+.range-btn.active{border-color:var(--red);color:var(--red);background:var(--red-soft);font-weight:600}
+
+/* ---------- feed ---------- */
+.feed{margin:18px 0 8px;display:none}
+.feed.show{display:block}
+.feed-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.feed-head h2{font-size:18px;font-weight:800}
+.feed-head .cnt{font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--red);font-size:13.5px;font-weight:600}
+.feed-head .scope{font-size:12px;color:var(--dim2)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:16px 17px;
+  display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);
+  transition:box-shadow .15s ease, border-color .15s ease;
+}
+.card:hover{border-color:var(--line2);box-shadow:var(--shadow-hover)}
+.card .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.date-badge{
+  font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11.5px;font-weight:600;
+  background:#fff;color:var(--red);border:1px solid rgba(192,57,43,.45);
+  border-radius:6px;padding:1px 8px;white-space:nowrap;
+}
+.date-badge.old{background:#fff;color:var(--dim);border-color:var(--line)}
+.src{font-size:12px;color:var(--dim)}
+.card h3{font-size:15px;line-height:1.6;font-weight:700}
+.card h3 a{color:var(--txt)}
+.card h3 a:hover{color:var(--red)}
+.card .sum{font-size:13.5px;line-height:1.75;color:var(--body)}
+.card .links{margin-top:auto;padding-top:6px;display:flex;gap:12px;flex-wrap:wrap}
+.card .links a{font-size:12px;color:var(--dim);font-family:"SF Mono",Menlo,Consolas,monospace}
+.card .links a:hover{color:var(--red)}
+.empty{
+  display:none;border:1px dashed var(--line2);border-radius:12px;background:#fff;
+  padding:34px;text-align:center;color:var(--dim);font-size:13.5px;
+}
+mark{background:var(--amber-bg);color:var(--red);font-weight:700;border-radius:3px;padding:0 2px}
+
+/* ---------- footer ---------- */
+footer{margin-top:44px;border-top:1px solid var(--line);padding:26px 0 40px;color:var(--dim);font-size:12.5px;line-height:1.9}
+footer b{color:var(--txt)}
+footer .disc{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:14px 16px;margin-top:12px;color:var(--amber-txt)}
+footer .disc b{color:#5A4F33}
+
+@media(max-width:760px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .cards{grid-template-columns:1fr}
+  .logo h1{font-size:16px}
+  .hd-meta{margin-left:0;width:100%}
+  .controls{top:0;position:static}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd-in">
+    <div class="logo">
+      <span class="mark"><span class="bolt">⚡</span></span>
+      <div>
+        <h1><span class="en">SST Global Monitor</span><span class="cn">全球固态变压器信息监控平台</span></h1>
+        <div class="sub">SOLID-STATE TRANSFORMER INTELLIGENCE</div>
+      </div>
+    </div>
+    <div class="hd-meta">
+      <span class="live-badge"><span class="dot"></span>监控运行中</span>
+      <span>本次更新 <b class="mono">2026-09-13 23:40 (UTC+8)</b></span>
+      <span class="tag-freq">⟳ 每 3 小时整点自动更新</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <div class="section-title">
+    <h2><span class="diamond">◈</span> 精选头条</h2>
+    <span class="hint">编辑精选 · 本期最重要的 6 条信号（横向滑动查看）</span>
+  </div>
+  <div class="hl-scroll" id="headlines"></div>
+
+  <div class="controls">
+    <div class="tabs" id="tabs"></div>
+    <div class="search-box">
+      <input id="kw" type="search" placeholder="输入关键词筛选（标题 / 摘要 / 来源），如：英飞凌、800V、订单…">
+      <button class="clear" id="kwClear" title="清空">×</button>
+    </div>
+    <div class="range-toggle">
+      <button class="range-btn" data-range="7">最近 7 天</button>
+      <button class="range-btn active" data-range="all">全部</button>
+    </div>
+  </div>
+
+  <div id="feeds"></div>
+
+  <footer>
+    <b>数据来源说明</b>：本站全部条目来自 2026-09-13 当轮公开网络检索结果（国内动态 31 条 / 全球动态 25 条 / 零部件与上游 26 条），由 Kimi Work 定时任务每 3 小时整点重新检索并重新生成页面。每条资讯附原始链接，可点击跳转溯源。
+    <div class="disc">
+      <b>免责声明</b>：本站信息均来自公开网络检索与转载，其中部分条目源自自媒体、股吧、研报转述或聚合站，准确性、时效性未经独立核实，仅供参考，不构成任何投资建议。市场研究机构对 SST 市场规模的测算口径差异极大，引用时请注意甄别原始口径。如有内容侵权或失实，请联系删除。
+    </div>
+  </footer>
+</div>
+
+<script id="sst-data" type="application/json">{"updated": "2026-09-13 23:40 (UTC+8)", "refDate": "2026-09-13", "sections": [{"id": "china", "name": "国内动态", "items": [{"d": "2026-09-10", "dd": "2026-09-10", "src": "金融界（转米筐投资）", "t": "七部门重磅定调！制约AI扩容的不是芯片，是供电", "urls": ["https://finance.jrj.com.cn/2026/09/11084058408800.shtml"], "s": "中央网信办等七部门联合印发《促进数字化绿色化协同转型发展实施方案（2026-2030年）》，明确“探索算力设施800V高压直流供电架构、推动超百千瓦单机柜部署”。文章将固态变压器 SST 列为第五大远期布局方向，认为其是算力供电“终局方案”，但目前仍处试点验证阶段。"}, {"d": "2026-09-07", "dd": "2026-09-07", "src": "东方财富网（文章来源：财联社）", "t": "七部门发文探索800V高压直流供电架构 AIDC电力设备迎增量机遇", "urls": ["https://finance.eastmoney.com/a/202609073866192295.html"], "s": "报道七部门方案并引开源证券观点（800V 直流带来直流保护、备电、电容、配电连接增量）。提及麦格米特已推出效率超 98.5% 的 SST 及适配英伟达 Kyber 机架的 Sidecar 边柜；新雷能开发 ±400V/800V 母线变换模块。"}, {"d": "2026-09-07", "dd": "2026-09-07", "src": "NewdPower 电力市场数据看板", "t": "固态变压器工程验证元年：从50赫兹电磁感应到兆瓦级数字路由", "urls": ["https://newdpower.cloud/articles/20260907-solid-state-transformer.html"], "s": "整理 2026 年 SST 政策与工程时间轴：3 月 20 日《节能装备高质量发展实施方案（2026-2028年）》将大容量 SST 纳入国家推广目录；6 月特锐德“算电岛”发布；7 月秦淮数据怀来项目投运、江苏行动方案、南瑞二代发布；9 月 4 日七部门 800V HVDC 文件。称 2026 为“工程验证元年”。"}, {"d": "2026-09-07", "dd": "2026-09-07（会议 8 月 27 日召开）", "src": "富途牛牛（机构调研纪要）", "t": "四方股份：8月27日召开分析师会议，多家机构参与", "urls": ["https://news.futunn.com/post/78907786"], "s": "公司称数智 SST1.0 产品已发布，正按客户需求持续优化开发与试验验证；可面向 IDC 算力中心提供“SST+储能+绿电消纳”一体化方案；推进更高电压等级机型研发，稳步布局海内外市场。上半年持续加大 SST、PCS 等研发投入。"}, {"d": "2026-09-01", "dd": "2026-09-01", "src": "分布式能源网（转行业报道）", "t": "固态变压器取得新突破！阳光电源 800V SST 落地算力实景", "urls": ["http://www.chinaden.cn/news_nr.asp?id=51275&Small_Class=7"], "s": "EnerNeo 系列 SST 已向客户交付数台，预计四季度正式投运，若顺利带载将是全球首个真实算力场景落地的 SST 800V 直流供电方案。已推出 13.8kV/10kV 产品，35kV 预计 2027H1 完成研发；预计 Q4 逐步收获订单、2027 小批量、2028 大规模交付；绑定海外 AI 头部企业，AIDC 配储在手订单约 2GWh。", "hl": 1}, {"d": "2026-09-10", "dd": "2026-09-09 / 2026-09-10", "src": "新浪财经（来源：行家说储能公众号）", "t": "阳光、比亚迪等10家储能公司，披露AIDC最新进展", "urls": ["https://k.sina.com.cn/article_5952915720_162d2490806704t1l2.html"], "s": "阳光电源首次将 AIDC 电源列入主要业务，EnerNeo SST 已面向市场供货。新风光 9 月 7 日业绩会称 SST 进入工程验证和产业化导入阶段、尚未形成规模收入，8 月新一代 SST 成套装备已发往 AIDC 示范项目现场。盛弘股份 2026 年成立 AIDC 关键电源业务部，样品开发中尚未正式销售，9 月 3 日官宣完成大型能源企业数据中心备电方案交付。"}, {"d": "2026-08-14", "dd": "2026-08-14", "src": "同花顺财经", "t": "新风光SST固态变压器整装出发，赋能AIDC供电架构升级", "urls": ["https://news.10jqka.com.cn/20260814/c678970571.shtml"], "s": "8 月 13 日新风光自主研发的新一代 SST 成套装备发运 AIDC 示范项目现场，含 800V SST 主机、直流输出柜、逆变输出柜、DC/DC 锂电接入柜；10kV 交流直入、800V 直流输出，单台 2.5MW，供电链路缩短 50% 以上。"}, {"d": "2026-09-04", "dd": "2026-09-04", "src": "ZAKER（自媒体分析）", "t": "固态变压器独角兽，手握100亿订单！", "urls": ["https://app.myzaker.com/news/article.php?pk=6a9a2fcb8e9f096d6d1a283d"], "s": "2026H1 金盘在手订单 106.97 亿元创新高，其中 AIDC 相关近 51 亿元（占 47.6%）；数据中心营收 12.65 亿元、同比 +122.57%。公司公告调减数据中心电源模块及液浸式变压器募投 1.8 亿元转投超高压输变电智能制造。文中盘点：8 月以来不下 5 家企业披露 SST 进展，超 40 家企业进入 SST 领域；南网科技与 6 家企业签订 SST 意向订单；特锐德 800V 供电 SST 1.0 进入挂网验证。"}, {"d": "2026-09-10", "dd": "2026-09-10（周报覆盖 8/20 事件）", "src": "新浪财经（券商电力设备行业周报）", "t": "电力设备行业周报：金盘科技布局数据中心固态变压器", "urls": ["http://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/809427730895/index.phtml"], "s": "海南省公示《2025 年度海南省先进装备制造首台套试点示范项目拟认定名单》，金盘科技数据中心 10kV/2.4MW 固态变压器入选。周报认为 SST 在 800V/±400V HVDC 中应用优势明显，金盘深耕北美变压器市场有望受益英伟达 800V 架构。"}, {"d": "2026-08-25", "dd": "2026-08-25", "src": "电子变压器与电感网（big-bit）", "t": "营收565亿，特变电工半年报出炉！", "urls": ["https://www.big-bit.com/wap/405963.html"], "s": "特变电工 2026H1 营收 565 亿元，海外签约 16.18 亿美元、同比 +44%。公司持续推进 SST 研发，固态变压器样机已完成全部试验并进入第三方检测认证阶段；同时推出首款构网型 215kW 储能变流升压一体机。"}, {"d": "2026-08-19", "dd": "2026-08-19", "src": "中财网（许继电气 2026 年半年报）", "t": "许继电气(000400)2026年半年度报告", "urls": ["https://www.cfi.net.cn/p20260819003648.html"], "s": "半年报披露新业务方面“布局新型工业电网调度、固态变压器等新业务方向”；上半年研发投入 2.97 亿元、同比 +12.98%。未披露 SST 订单或样机细节，仍处布局阶段。"}, {"d": "2026-09-03", "dd": "2026-09-03（南方+转载，原内容 6 月）", "src": "南方+（南方plus）", "t": "两大行研报打架，AI电源龙头普跌，近一年股价涨超200%", "urls": ["https://static.nfnews.com/content/202606/12/c12519584.html"], "s": "麦格米特 5 月 20 日投资者关系记录表披露：预研高压转换核心产品包括 SST，直接承接电网高压输入、输出 800VDC，效率超 98.5%，支持兆瓦级算力集群集中供电；海外已达成部分北美大客户批量交付，国内预计 2026 年完成首个项目批量交付。"}, {"d": "2026-09-13", "dd": "2026-09-07 / 2026-09-13", "src": "搜狐（英飞凌合作）、新浪（伊顿专题）", "t": "英飞凌双线落地SiC固态变压器布局 / 伊顿数据中心固态变压器：从电网到芯片的供电架构重构", "urls": ["https://m.sohu.com/a/1072826001_266510", "https://k.sina.com.cn/article_3242158197_c13f687500101s2qm.html"], "s": "9 月 4 日伊顿官宣与英飞凌深化合作，将 1200V CoolSiC Easy 模块导入伊顿 MV SST 2.0 平台（伊顿深圳团队自研，单套 2.5MW，过 TÜV 南德认证，可用性 99.999%），产品将投放亚太、欧非市场。该平台实现 10kV 中压交流到 800V 直流转换，功率密度 278kW/m²，较传统方案省 40% 占地。9 月 2 日英飞凌另与 Skeleton 签 MoU 联合研发 AI 数据中心供电。", "hl": 1}, {"d": "2026-08-26", "dd": "2026-08-26", "src": "人民网", "t": "电网加码、算力爆发 变压器行业迎结构性增长（中国西电斩获海外数据中心 SST 订单）", "urls": ["http://finance.people.com.cn/n1/2026/0827/c1004-40787179.html"], "s": "中国西电半年报披露旗下西电电力电子斩获海外数据中心专用 SST 订单，供货北美大型 AI 智算中心，为国产 SST 海外商业化首单；金盘科技 10kV/2.4MW 全 SiC SST 样机已落地，进入国内头部互联网及电信运营商数据中心项目。政策面引《节能装备高质量发展实施方案（2026-2028年）》加快 SST 推广应用。", "hl": 1}, {"d": "2026-08-30", "dd": "2026-08-30", "src": "经济观察网（经观智讯）", "t": "中国西电（601179）固态变压器落地 推进智慧工厂项目", "urls": ["http://www.eeo.com.cn/2026/0830/1017694.shtml"], "s": "中国西电 SST 已在贵安数据中心落地，并斩获海外数据中心订单；同步推进重庆高压开关智慧工厂项目。市场关注新赛道能否放量形成第二增长曲线。"}, {"d": "2026-08-29", "dd": "2026-08-29", "src": "中财网 CFi.CN", "t": "SST固态变压器产业化加速 国产厂商迎数据中心供电革命", "urls": ["https://www.cfi.net.cn/p20260829002497.html"], "s": "机构研报称 SST 进入规模化商用前夜，国内金盘科技、四方股份、阳光电源等十余家厂商密集发布新品并斩获海外订单；预计 2030 年 SST 市场空间 1749 亿元，AIDC 为最大驱动力。"}, {"d": "2026-09-03", "dd": "2026-09-03（股吧转引东方证券观点）", "src": "东方财富网股吧（转东方证券研报）", "t": "东方证券主要观点：数据中心功耗密度提升，倒逼外部供配电架构升级", "urls": ["https://mguba.eastmoney.com/mguba/article/0/1766754977"], "s": "东方证券称 SST 产业化进展加速，国内边际催化密集——西电电力电子和为光能源斩获海外数据中心订单；为光能源、金盘科技、四方股份、中国西电、智光电气、新风光、国电南瑞、阳光电源等多家发布 SST 新品。"}, {"d": "2026-09-02", "dd": "2026-09-01 / 2026-09-02", "src": "电子变压器与电感网（big-bit）、网易转载", "t": "电网用上固态变压器还要多久？", "urls": ["https://www.big-bit.com/wap/News/405996.html"], "s": "2026 年 7 月秦淮数据在河北怀来投运行业首个算力中心 SST 智能直流供电商业化项目（10kV→800V，效率 98.5%，占地减 50%+）；国电南瑞发布第二代“瑞”系 SST 四大系列。配网侧：国网临沂 10kV 直挂 SST “光储直柔”超充系统投运；常州新北区首个 SST 充电民生示范项目；中国西电 10kV/2MVA SST 在西安高新园区光储充挂网。上半年至少 20 家企业发布 SST 产品，7 月底超 30 家公布进展；磁性元器件企业（可立克、铭普光磁、京泉华）多数仍处送样验证阶段，批量订单未真正释放。"}, {"d": "2026-08-14", "dd": "2026-08-14（报道，投运为 8-07）", "src": "cwese.com（行业媒体）", "t": "从28亿到1010亿！4.2MW一步变换、98.5%转换效率，固态变压器SST如何成为AI数据中心的“能源路由器”？", "urls": ["https://www.cwese.com/index.php?m=home&c=View&a=index&aid=2264"], "s": "8 月 7 日广东省首个完全自主知识产权 SST 示范项目——智光电气 Coota 广州黄埔示范基地投运，单机 4.2MW，实现 10kV 交流至 800V 直流一步变换；省工信厅、电网、电信运营商等 200 余人出席。"}, {"d": "2026-09-04", "dd": "2026-09-04", "src": "中国日报网", "t": "预制舱变电站正重新定义电力基础设施 特锐德的中国方案全球“爆单”", "urls": ["https://cn.chinadaily.com.cn/a/202609/04/WS6a9a7ec3e4b09a165c78819b.html"], "s": "特锐德入选国资委“场景万象”专项行动典型案例，近 70% 订单与央企合作，上半年接连中标华润新能源、国能唐山、国家电网等项目；其“算电岛”方案以 SST 实现高压直入、800V 直流输出，覆盖戈壁风电到算力中心场景。"}, {"d": "2026-08-28", "dd": "2026-08-28", "src": "新浪（伊顿专题）", "t": "伊顿数据中心固态变压器：AI算力时代供电架构的范式跃迁", "urls": ["https://k.sina.com.cn/article_3242158197_c13f687500101sevm.html"], "s": "伊顿与世纪互联联合申报的《国家绿色数据中心新型中压直流能源路由器创新项目》在雄安落地，支撑 AI GPU 集群动态负载，72 小时满负荷测试零故障，进入国家级绿色低碳示范体系。"}, {"d": "2026-08-31", "dd": "2026-08-31", "src": "Investing.com 香港（转智通财经）", "t": "东方证券：AIDC供电终局路线SST产业化从0到1加速落地", "urls": ["https://hk.investing.com/news/stock-market-news/article-1634920"], "s": "东方证券基于 RAND 电力需求预测与 semianalysis 的 SST 渗透率数据测算，预计 2030 年 SST 市场空间 1749 亿元；SST 应用场景多元，AIDC 为最大场景。"}, {"d": "2026-08-16", "dd": "2026-08-15 / 2026-08-16", "src": "中财网、发现报告（东方证券 AIDC 动态追踪系列 6）", "t": "英伟达800V规划落地提速 国内电源企业出海机遇显现", "urls": ["https://www.cfi.net.cn/p20260815000065.html", "https://www.fxbaogao.com/detail/5605182"], "s": "8 月 12 日英伟达发布 800VDC V2.0 白皮书，给出机架级 Power Rack、集群级 Power Center、机房级 DC Power Block 三种方案；DC Power Block 支持 TRU 与 SST 双路线，新一代 SST 预计 2029 年成熟落地。已有 80 家供应链企业与英伟达合作，研报看好阳光电源、科士达、盛弘股份、中恒电气等出海机遇。"}, {"d": "2026-08-24", "dd": "2026-08-24（雪球专栏，数据截至 8 月）", "src": "雪球（四方股份专栏）", "t": "工程已挂网、业绩还没来：渗透率不足3%的固态变压器，到了验证窗口", "urls": ["https://xueqiu.com/S/SH601126/reports?page=3"], "s": "个人行业研究笔记指出 SST 当前渗透率不足 3%，贵安、重庆、庆阳工程已挂网运行但业绩尚未兑现，处于验证窗口期；提示估值领先于收入的风险。（自媒体内容，注意甄别）"}, {"d": "2026-08-17", "dd": "2026-08-17（威尔高半年报引用）", "src": "中财网（威尔高 2026 半年报）", "t": "威尔高(301251)2026年半年度报告", "urls": ["https://www.cfi.net.cn/p20260817001949.html"], "s": "半年报引用大东时代智库《2026 固态变压器（SST）技术与市场趋势》：2026 年全球 SST 市场约 27 亿元，2030 年增至 915 亿元（CAGR 超 100%）；预计 2030 年 AIDC 新装机 SST 渗透率 20%，对应市场 752 亿元。"}, {"d": "2026-08-15", "dd": "2026-08-15", "src": "搜狐（中国固态变压器技术与应用生态大会报道）", "t": "固态变压器从“实验室概念”走向“千亿赛道”｜SST产业化元年", "urls": ["https://m.sohu.com/a/1063264925_222256"], "s": "SST China 2026 在苏州召开，近 600 人到场。台达预计 2030 年中性数百亿、乐观千亿级；叶新平给出 2026 商业元年→2028 大规模应用→2030 千亿的节奏。痛点：SiC 长期可靠性存疑；SST 单台超 400 万 vs 巴拿马电源 200 多万；SiC 模块占整机成本 25%-30%。台达已在东阳光化成箔产线落地 SST，年省电费约 2000 万元；西安西电年内已交付 8 台，2027 年迎批量交付窗口。"}, {"d": "2026-09-07", "dd": "2026-09-07", "src": "东方财富网", "t": "AI把数据中心推上800V", "urls": ["https://wap.eastmoney.com/a/202609083868080530.html"], "s": "OCP 提出的大功率“变压器+整流器”组合与 SST 均是实现中压交流直转 800VDC 的设备路线，已发布 SST 设计规范 V0.3；但 SST 规模化程度明显低于“交流系统+800V 电源柜”过渡路线，800VDC 是渐进演进而非一次性替换。"}, {"d": "2026-09-09", "dd": "2026-09-09", "src": "ZAKER（自媒体“800VDC，要开始盯紧了”）", "t": "800VDC，要开始盯紧了（字节跳动 AIDC 招标首次引入 800V HVDC）", "urls": ["https://app.myzaker.com/news/article.php?pk=6aa241b08e9f091b4754d19d"], "s": "预测 2027 年海外 45% 新增/改造装机配 800VDC（约 22GW），2028 年渗透率 85%；国内保守估计 2030 年渗透率 70%（约 14GW）。判断弹性最大的是 SST，海外 2028 年产业化起量，国内大概率跳过 SideCar 过渡阶段直接拥抱 SST。（自媒体测算，注意甄别）"}, {"d": "2026-09-08", "dd": "2026-09-08", "src": "环球老虎财经", "t": "砸下41亿入股中恒电气：宁德时代要争夺算力时代的电力话语权？", "urls": ["https://cdnh5.laohucaijing.com/kjj_lh/article.html?type=2&scartype=2&newid=186229&productId=1575"], "s": "宁德时代 41 亿元入股中恒电气。中恒第三代宽幅 HVDC 平台已过英伟达全套认证，为阿里巴拿马电源核心供应商（份额超 90%）；其 SST 产品已推进至小批量试点阶段。此前宁德时代关联资本 64 亿元收购世纪互联 38.1% 股份。"}, {"d": "2026-09-11", "dd": "2026-09-11（页面更新日期；预测发布于 2025-11-27）", "src": "集邦咨询 TrendForce", "t": "TrendForce集邦咨询发布2026年十大科技市场趋势预测", "urls": ["https://www.trendforce.cn/presscenter/news/20251127-12804.html"], "s": "AI 数据中心迈向 800V HVDC，多家半导体供应商加入 NVIDIA 800V HVDC 计划；SiC 负责前端/中端高压大功率转换，对下一代 SST 至关重要；预估 SiC/GaN 在数据中心供电渗透率 2026 年 17%、2030 年突破 30%。"}, {"d": "2026-09-09", "dd": "2026-09-09", "src": "网易（编译自 POWER）", "t": "固态变压器重大突破：兆瓦级设备完成活线馈线实测", "urls": ["https://www.163.com/dy/article/L6DNHB9S05118UGF.html"], "s": "北卡州立大学、NYPA 与 EPRI 在 13.2kV 活跃配电馈线上完成兆瓦级 SST 实地演示，称为首次真实配电条件下兆瓦级 SST 独立验证；EPRI 白皮书指出高频化可大幅缩小磁性元件体积，数据中心、EV 充电、储能等应用关注度提升。"}]}, {"id": "global", "name": "全球动态", "items": [{"d": "2026-08-12", "dd": "2026-08-11/12（规范发布于 2026 年 7 月）", "src": "Converge Digest / Xentir Media / EffectStory", "t": "OCP 发布 LVDC 固态变压器规范 v0.3，80+ 厂商跟进", "urls": ["https://convergedigest.com/ocp-800-vdc-standard-megawatt-ai-racks/", "https://xentirmedia.com/tech/nvidia-unveils-800-vdc-architecture-for-ai-data-centers/", "https://effectstory.com/en/articles/nvidia-google-microsoft-800vdc-ocp-power"], "s": "NVIDIA、Google、Microsoft 通过 OCP 推进 800 VDC 架构成为开放标准：2026 年 3 月发布联合白皮书，7 月发布《LVDC Solid-State Transformer Specification v0.3》。超过 80 家设备制造商已在按该规范开发产品。路线图分三级：2026 下半年推出 MGX 兼容 800 VDC 电源机架（可改造存量 AC 机房）、2027 年推出支持 2 MW/列的 Row Power Center、面向新建园区的 DC Power Block（中压电网一步直转 800 VDC）。NVIDIA 援引 Wood Mackenzie 预测：到 2040 年全球 AI 与数据基础设施投资将达 9 万亿美元。"}, {"d": "2026-09-10", "dd": "2026-09-10", "src": "Business Wire（SolarEdge 官方新闻稿）", "t": "SolarEdge 与 NVIDIA 联合发布 800 VDC 保护框架", "urls": ["https://www.businesswire.com/news/home/20260910201126/en/SolarEdge-Advances-Full-DC-Powertrain-for-AI-Data-Centers-Publishes-800-VDC-Protection-Framework-With-NVIDIA"], "s": "SolarEdge 宣布推进面向 AI 数据中心的全直流动力链（Full DC Powertrain），并与 NVIDIA 联合发布 800 VDC 保护框架（Protection Framework）。这是 800 VDC 生态在直流保护这一关键工程短板上的重要标准化动作。（注：businesswire 原文页面返回 403，未能打开正文，信息以检索返回的标题与摘要为准。）"}, {"d": "2026-08-05", "dd": "2026-08-05（更新）", "src": "Mgrid.org（Microgrid & Distributed Energy Intelligence）", "t": "NVIDIA 800 VDC 架构对电网侧的意义：消除相位不平衡", "urls": ["https://mgrid.org/2026/05/15/how-moving-ai-data-centers-to-800-vdc-distribution-and-solid-state-transformers-sidesteps-phase-imbalance-entirely/"], "s": "分析指出，中压 SST 将 13.8 kV 三相 AC 直转 800 VDC 后，下游全部为直流，从架构上消除了 480 VAC 系统的相位不平衡问题（传统 STATCOM/有源滤波方案在 100 MW AI 园区约需 1,000 万~2,500 万美元资本开支）。NVIDIA 官方口径：效率提升最高 5%、维护成本降低 70%、TCO 降低 30%、铜用量减少 45%。点名 Eaton、Schneider Electric、Vertiv 为电力系统生态伙伴，Infineon、ST、TI、ROHM 为器件供应商。"}, {"d": "2026-09-07", "dd": "2026-09-04 发文，2026-09-07 报道", "src": "雪球（转述《促进数字化绿色化协同转型发展实施方案（2026-2030年）》）", "t": "中国七部门政策文件点名 800V HVDC", "urls": ["https://xueqiu.com/3828436523/408260353"], "s": "中央网信办、国家发改委、工信部、生态环境部等七部门联合印发方案，明确“探索算力设施 800V 高压直流供电架构，推动超百千瓦单机柜部署”。报道点名 A 股受益链条：麦格米特（SST 效率 >98.5%，适配 Kyber 机架）、中恒电气（HVDC 市占约 28-31%）、四方股份（10kV 直转 800V SiC SST，进入 NVIDIA 一级候选名单）、金盘科技（2.4 MW 全 SiC SST 样机）等。"}, {"d": "2026-09-11", "dd": "2026-09-07 / 2026-09-11", "src": "Savrn（Chad Harris）/ The Sample Space", "t": "行业冷静视角：800 VDC 落地节奏与 SST 成熟度审计", "urls": ["https://savrn.com/blog/800-vdc-data-center-power-guide", "https://thesamplespace.com/nvidia-800-vdc-power-rack-hybrid-retreat"], "s": "Savrn 的供应商盘点（截至 2026 年 9 月）指出：目前尚无任何 UL 认证的 800 VDC 系统在美国数据中心运行；GE Vernova 判断“变压器+整流侧挂电源机架可立即规模部署，而中压 SST 仍需数年”。Mgrid 的自我审计亦称：全球真正投入商业运营的 SST 仅为个位数，绝大多数产品处于“已发布/已融资”阶段。SemiAnalysis 称 NVIDIA 将与伙伴扩展示范站点后再大规模部署。"}, {"d": "2026-09-09", "dd": "2026-08-14 宣布；2026-09-02/08/09 持续报道", "src": "Engineering.com / Data Centre Digest / openPR", "t": "Siemens × Reinhausen 联合开发 36 kV→800 VDC SST", "urls": ["https://www.engineering.com/siemens-and-reinhausen-partner-on-solid-state-transformer/", "https://datacentredigest.com/siemens-and-reinhausen-to-develop-solid-state-transformer-for-800-vdc-ai-ready-data-centers/"], "s": "Siemens 与全球变压器调压技术龙头 Reinhausen（MR）达成战略合作，共同开发并产业化面向 AI 数据中心的模块化 SST：最高 36 kV 电网输入，稳定 800 VDC 输出，毫秒级负载响应。Siemens 出电力电子与电网集成能力，Reinhausen 出中压电力电子与电能质量经验。这是欧洲两大电气巨头在 SST 上最明确的一次结盟。"}, {"d": "2026-07-22", "dd": "2026-07-22（Q2 财报口径）；首次披露于 2026-01-28", "src": "GE Vernova 官网 / Kristal Lens / Datainsights 财报摘要", "t": "GE Vernova：首台 SST 样机完成，2026 年秋交付 hyperscaler 客户", "urls": ["https://www.gevernova.com/news/taxonomy/term/9692", "https://lens.kristal.ai/p/ge-vernova-4q25-earnings-the-ai-boom"], "s": "GE Vernova 首台 SST 机组已于 2026 年 1 月完成，经测试后计划 2026 年秋季交付一家 hyperscaler 客户，随后约 6 个月测试，潜在订单窗口在 2027 年。同期推出 HiPerGuard 34.5 kV 中压 UPS（预计 2027 年中开始发货）。另据 Cervicorn 整理，DOE 向 GE Vernova 推进 199 万美元 FASST 项目，在公用事业变电站部署 1 MVA 三绕组 SST。"}, {"d": "2026-09-08", "dd": "产品页更新 2026-06-05；Fact.MR 引述 2026-09-08", "src": "Eaton 官网 / Fact.MR / Inside Deep Tech", "t": "Eaton：MVSST 产品在售（>97% 效率 @800 VDC），并购 Resilient Power 后持续推进", "urls": ["https://www.eaton.com/us/en-us/products/medium-voltage-power-distribution-control-systems/transformers/eaton-and-resilient-power.html", "https://www.factmr.com/report/solid-state-power-transformers-market"], "s": "Eaton 在 2025 年 8 月以约 8,600 万美元收购 Resilient Power Systems 后，将其中压 SST 技术并入产品线，在售 MVSST 标称 2 MW、15 kV 级、800 VDC 输出转换效率 >97%，面向数据中心与 EV 充电场景。另据 Inside Deep Tech，Eaton 还与 NVIDIA 推出 Beam Rubin DSX 平台（2026 年 3 月）；2026 年 5 月承诺投入 300 万新元参与新加坡国大可持续热带数据中心试验床（含 2.5 MW 中压 SST 示范）。"}, {"d": "2026-07-14", "dd": "2026-07-14（MOU）；2026 年 2 月商用项目上线", "src": "Delta Americas 官方 / DataCenterNews / DG Matrix 行业综述", "t": "Delta Electronics：与 X LABS 签署 100 MW SST 合作 MOU；中国已有量产级商用部署", "urls": ["https://www.delta-americas.com/en-us/news/delta-electronics-americas-and-x-labs-sign-technology-partnership-mou-to-power-next-gen-ai-data-centers", "https://datacenter.news/story/delta-x-labs-sign-ai-data-centre-power-partnership", "https://www.dgmatrix.com/news-and-media/news/solid-state-transformers-could-reshape-ai-infrastructure/1223"], "s": "Delta（Americas）与 X LABS 签署技术合作 MOU，围绕 AI 数据中心能源即服务（EaaS），首期目标 100 MW Delta SST 技术，远期可扩展至 GW 级；X LABS 董事长 Frank Duggan 同时是 Hitachi Energy 副董事长。Delta 单柜 1 MW、占地 1 平方米、支持 240/400/800 V 多路 DC 输出；其 SST 已于 2026 年 2 月在 Chindata 华北超大规模园区为 Meituan 投运，另有报道称 7 月行业首个商用 SST 项目落地秦淮数据环首都·桑园基地。Delta 还在 GTC 2026 展示了与 NVIDIA 合作的 800 VDC 列间电源机架（660 kW，内嵌 480 kW BBU）。"}, {"d": "2026-09-11", "dd": "2026-09-07 ~ 09-11", "src": "Interesting Engineering / The Data Center Engineer / EVsays（引 The Korea Times）", "t": "Hyosung Heavy Industries：22.9 kV SST 商业化 + 3 亿美元美国扩产", "urls": ["https://interestingengineering.com/energy/worlds-first-22-9kv-solid-state-transformer", "https://thedatacenterengineer.com/news/hyosung-develops-22-9kv-solid-state-transformer-for-ai-data-center-power/"], "s": "韩国 Hyosung 重工宣布其 22.9 kV 级、1.05 MVA SST（2022 年开发）可直接接入城市配电网，瞄准美国 AI 数据中心供电市场，自称全球首个该电压等级的“半导体变压器”商业化者。配套动作：累计 3 亿美元收购并扩建田纳西州 Memphis 超高压变压器工厂；与 Quanta Services 合资在宾州生产 72.5~800 kV 断路器。注意：尚无美国订单或收入披露，宣传性表述需谨慎对待。", "hl": 1}, {"d": "2026-09-08", "dd": "2026-09-08", "src": "Enphase Energy 官方新闻稿（Globe Newswire）/ Yahoo Finance", "t": "Enphase：IQ SST 功率模块在德州投产，11 月全系统演示", "urls": ["https://investor.enphase.com/news-releases/news-release-details/enphase-advances-iq-solid-state-transformer-development-ai-data", "https://finance.yahoo.com/energy/articles/enphase-energy-rises-5-solid-164923843.html"], "s": "Enphase 宣布 IQ SST 的 4 kW 功率模块已在德州 Arlington 工厂下线，用于组装和验证全尺寸 IQ SST 机架（数百个模块组成、单机架最高 5 MW），实现中压 AC 直转 800 VDC、亚毫秒级动态负载响应。沿用其微逆的高自动化产线模式，目标年产数十 GW；满足 FEOC 要求。全系统演示预计 2026 年 11 月，客户试点 2027 年，商业出货 2028 年——消息当日股价上涨约 5%。", "hl": 1}, {"d": "2026-07-11", "dd": "2026-07-09 发布；07-11 报道", "src": "富途牛牛（转界面新闻）/ Pandaily", "t": "Sungrow（阳光电源）发布 EnerNeo SST，签署 130 MW 框架采购", "urls": ["https://news.futunn.com/en/flash/20496001/sungrow-power-supply-has-launched-a-new-solid-state-transformer", "https://pandaily.com/sungrow-solid-state-transformer-ai-data-center-power-jul2026"], "s": "Sungrow 发布面向 AIDC 的 EnerNeo SST：输入 10~13.8 kV AC（兼容亚洲与北美市场），输出 800 VDC，峰值效率 98.5%，功率密度 312 kW/m²，单机覆盖 1.5~4.5 MW。发布会上与东阳光签署 30 MW（2026-2027 分批交付）、与中联数据签署 100 MW（2026 年底示范项目启动，2027-2028 分批交付）框架协议；Microsoft、AWS、阿里云、腾讯、字节、百度均派代表出席。公司规划：2026 年北美 hyperscaler 小批送样、2027 年批量订单、2028 年规模部署。"}, {"d": "2026-09-08", "dd": "2026-09-08（Fact.MR 定性）；2026-07-16（ABB Q2）", "src": "Fact.MR / SSBCrack（ABB 财报报道）/ Drybulb", "t": "Schneider Electric / ABB：800 VDC 生态参与者，但无独立 SST 产品发布", "urls": ["https://www.factmr.com/report/solid-state-power-transformers-market", "https://news.ssbcrack.com/abb-reports-strong-q2-2026-results-with-record-high-order-intake-and-increased-earnings/"], "s": "Fact.MR 明确将 Schneider Electric 定位为“800 VDC 基础设施参与者而非已确认的商用 SST 供应商”——其动作限于 800 VDC sidecar（最高 1.2 MW/柜）、Galaxy VXL UPS 与直流电弧白皮书。ABB 方面：2025 年 3 月少数股权投资 DG Matrix；2026 年 Q2 推出 HiPerGuard 34.5 kV 中压 UPS 并宣布三年内向欧洲中压产能投资约 2 亿美元；6 月将 NVIDIA DSX Blueprint 集成进其数字化设计工具；SST 本体研发集中在苏黎世与曼海姆，无新产品发布。"}, {"d": "2026-03-10", "dd": "2026-03-10（另见 2026-02-20 报道）", "src": "TechCrunch", "t": "SST 赛道数月内融资 2.8 亿美元，Hyperscale Power 加入战局", "urls": ["https://techcrunch.com/2026/03/10/hyperscale-power-is-the-latest-startup-to-challenge-140-year-old-transformer-tech/", "https://techcrunch.com/2026/02/20/why-investors-are-going-gaga-over-solid-state-transformers/"], "s": "TechCrunch 统计：DG Matrix 完成 6,000 万美元 A 轮（Engine Ventures 领投，Mitsubishi Heavy Industries、ABB 参投，累计融资超 1 亿美元）；Heron Power 完成 1.4 亿美元 B 轮（a16z American Dynamism 与 Breakthrough Energy Ventures 联合领投，累计超 1.8 亿美元）；Amperesand 于 2025 年 11 月完成 8,000 万美元 A 轮（Walden Catalyst 与 Temasek 联合领投）。新入局者 Hyperscale Power（苏黎世联邦理工背景）完成 500 万欧元种子轮（World Fund、Vsquared 领投），主打更高频化小型化路线。PitchBook 口径三家合计融资超 3.3 亿美元。"}, {"d": "2026-08-05", "dd": "2026-02-18 完成融资；08-05 复盘报道", "src": "Mgrid.org / Drybulb", "t": "Heron Power：1.4 亿美元建 40 GW/年美国 SST 工厂", "urls": ["https://mgrid.org/2026/02/18/heron-power-closes-140-million-series-b-led-by-andreessen-horowitz-and-breakthrough-energy-for-a-40-gw-us-solid-state-transformer-factory/", "https://www.drybulb.com/writing/800vdc-power-architecture"], "s": "前 Tesla 动力与能源高级副总裁 Drew Baglino 创办的 Heron Power 完成 SST 创业公司史上最大单笔融资，资金用于建设年产 40 GW 中压功率转换设备的美国工厂，2027 下半年满产。Heron Link 产品将 34.5 kV AC 一步直转 800 VDC（单台 4.2 MW，集成电池缓冲可替代 UPS），原生兼容 NVIDIA 800 VDC 机架；据报道已锁定约 50 GW 订单意向，公开伙伴包括 Intersect Power、Crusoe。2026 年中内部示范、2027 年初伙伴安装。"}, {"d": "2026-08-14", "dd": "2025-11-18 融资；2026-08-14 TDK Ventures 评述", "src": "Mgrid.org / Interface.media（TDK Ventures 撰文）/ Tech in Asia", "t": "Amperesand：8,000 万美元 A 轮，2026 年目标出货 30 MW", "urls": ["https://mgrid.org/2025/11/18/amperesand-raises-80-million-series-a-led-by-walden-catalyst-and-temasek-for-ai-data-center-solid-state-transformers/", "https://interface.media/blog/2026/08/14/ais-power-problem-demands-a-new-kind-of-transformer/"], "s": "南洋理工大学孵化的 Amperesand（新加坡/美国）2026 年计划向 hyperscale 与关键电力客户部署 30 MW 中压 SST，2027 年放量；宣称电气占地减少 80%、安装人工减半、接电速度提升 10 倍。首批商用机组 2026 年初交付，含与 PSA International 的新加坡港项目。"}, {"d": "2026-06-17", "dd": "2026-03-24（Infineon 合作）；2026-06-17（公司综述）", "src": "Semiconductor Today / DG Matrix 官网", "t": "DG Matrix：联手 Infineon SiC，渠道与生态持续扩张", "urls": ["https://www.semiconductor-today.com/news_items/2026/mar/infineon-240326.shtml", "https://www.dgmatrix.com/news-and-media/news/solid-state-transformers-could-reshape-ai-infrastructure/1223"], "s": "DG Matrix 与 Infineon 达成合作，为 Interport 多端口 SST 平台采购最新一代 SiC 器件。此前还与 Ampace 合作推出面向 NVIDIA 800 VDC AI Factory 标准的 UL 认证 SST+BESS 一体机（2025-12），与 PowerSecure（2026-01）、模块化数据中心商 InfraPartners、以及 a16z/Sam Altman 支持的 Exowatt 建立合作；称已与 NVIDIA 完成为期一年的 GPU 动态负载储能测试。数据中心先驱 Christian Belady 出任顾问。"}, {"d": "2026-08-25", "dd": "2026-08-18/19 发布；08-24/25 Ars Technica 深度报道", "src": "American Public Power Association / T&D World / Ars Technica", "t": "NC State / NYPA / EPRI：全球首个在运配电线路上验证的兆瓦级 SST（98% 效率）", "urls": ["https://www.publicpower.org/periodical/article/nypa-epri-and-north-carolina-state-university-demonstrate-solid-state-transformer-success-under-real", "https://arstechnica.com/gadgets/2026/08/energy-hungry-ai-data-centers-spur-new-power-transformer-technology/"], "s": "北卡州立大学与纽约电力局（NYPA）、EPRI 合作，在 EPRI 马萨诸塞州 Lenox 实验室的真实配电线路上完成 1 MW 级 SST 实证，效率约 98%（传统变压器+整流约 96%），为首个经独立验证、接入在运公用事业馈线的兆瓦级 SST。样机 2026 年 5 月起在现场集装箱内历经夏季工况测试，9 月运回 NC State。项目负责人 Srdjan Lukic 称数据中心是当前 SST 的“杀手级应用”。"}, {"d": "2026-08-26", "dd": "2026-08-26", "src": "International District Energy Association", "t": "UC San Diego：CEC 资助 848 万美元，为 2 MW AI 负载测试中压 SST", "urls": ["https://www.districtenergy.org/blogs/district-energy/2026/08/26/uc-san-diego-to-test-solid-state-transformer-for-2"], "s": "加州能源委员会（CEC）资助 848 万美元，UC San Diego 将在 San Diego Supercomputer Center 测试中压 SST 与柔性负载控制，服务 2 MW AI 计算负载，降低功率变换损耗并支撑电网规划。该校 55 MW 校园微电网（满足约 92% 年用电）为评估大功率柔性负载与分布式能源互动提供了独特环境。"}, {"d": "2026-09-10", "dd": "2026-09-10（综述文章）", "src": "美国能源部官网", "t": "美国 DOE：持续加码 SST/电力电子电网项目", "urls": ["https://www.energy.gov/oe/articles/unlocking-potential-power-electronics-grid"], "s": "DOE 电力办公室发文强调推进 SST 等电力电子技术并强化美国电网供应链。结合各市场研究机构的整理：DOE 2026 年推进 GE Vernova 的 199 万美元 FASST 项目（1 MVA 三绕组 SST 公用事业变电站部署）、DIRECT 项目（单级 SST 模块化级联）、PowerHub 二代项目（集成配电变压器+调压+功率因数校正的柔性 SST），并宣布了面向水泵应用的 full-scale AC SST 示范；2026 年 3 月另有约 19 亿美元 SPARK 电网升级资助机会。"}, {"d": "2026-08-25", "dd": "2026-08-24/25", "src": "Ars Technica", "t": "Ars Technica：数据中心成为 SST 的“杀手级应用”", "urls": ["https://arstechnica.com/gadgets/2026/08/energy-hungry-ai-data-centers-spur-new-power-transformer-technology/"], "s": "Ars Technica 深度报道指出 Amperesand、Heron Power、DG Matrix 一年内合计融资超 2.8 亿美元；SST 有望缓解传统变压器供应链短缺（“SST 像电子产品一样制造，彻底打开了谁能做变压器、在哪里做的空间”）。同时指出该技术同样适用于 MW 级 EV 快充场景。"}, {"d": "2026-09-08", "dd": "2026-09-08（报告页更新）", "src": "Fact.MR / openPR", "t": "Fact.MR：SST 市场 2026 年 15 亿美元 → 2036 年 88 亿美元（CAGR 19.6%）", "urls": ["https://www.factmr.com/report/solid-state-power-transformers-market", "https://www.openpr.com/news/4625883/siemens-and-reinhausen-move-sst-development-toward-36-kv-800-vdc"], "s": "Fact.MR 将“固态电力变压器”市场估为 2026 年 15 亿美元、2036 年 88 亿美元（CAGR 19.6%），EV 充电枢纽占 2026 年需求 27%；点名 Eaton、ABB、DG Matrix、GE Vernova、Hitachi Energy、Siemens、Reinhausen、Siemens Energy 为活跃玩家。（注意：其另一份 6 月口径报告估值仅 2.37 亿美元/2026，口径差异极大。）"}, {"d": "2026-09-01", "dd": "2026-06 ~ 09 各报告", "src": "Fortune Business Insights / Precedence Research / 360iResearch / MRFR / Research and Markets 等", "t": "主流市场研究机构估值汇总（口径分歧显著）", "urls": ["https://www.fortunebusinessinsights.com/solid-state-transformer-market-106374", "https://www.precedenceresearch.com/solid-state-transformers-market", "https://www.360iresearch.com/library/intelligence/solid-state-transformer", "https://www.marketresearchfuture.com/reports/solid-state-transformer-market-5857", "https://www.researchandmarkets.com/reports/6068106/solid-state-transformers-global-strategic"], "s": "各机构对 SST 市场规模的分歧极大——Fortune BI：2026 年 1.82 亿美元 → 2034 年 3.69 亿（CAGR 9.26%）；360iResearch：2026 年 2.08 亿 → 2032 年 4.70 亿（CAGR 14.49%）；MRFR：2025 年 1.93 亿 → 2035 年 6.90 亿（CAGR 14.12%）；Research and Markets：2024 年 1.64 亿 → 2030 年 8.06 亿（CAGR 30.3%）；Fact.MR 宽口径：15 亿美元（2026）。窄口径（纯 SST 设备出货）约 2 亿美元量级、宽口径（含电力电子系统）15 亿美元量级，使用时须注明口径。"}, {"d": "2026-06-30", "dd": "2026-06-30", "src": "Business Today（引 YES Securities）", "t": "印度券商 YES Securities：数据中心需求支撑电气设备商订单", "urls": ["https://www.businesstoday.in/markets/stocks/story/va-tech-wabag-ge-vernova-siemens-abb-india-shares-target-revisions-ahead-of-q1-results-540038-2026-06-30"], "s": "YES Securities 预计 ABB India、Siemens India 受数据中心高景气拉动销售增长超 10%；GE Vernova T&D India 订单积压达 2 万亿卢比（含 HVDC 大单），上调目标价至 3,850 卢比。属于“数据中心电力设备”景气度的券商佐证，但未直接覆盖 SST 细分市场。"}, {"d": "2026-07-15", "dd": "2026-07-15", "src": "pv magazine USA", "t": "pv magazine USA：数据中心电力架构转向 BESS + SST", "urls": ["https://pv-magazine-usa.com/2026/07/15/data-center-power-shifts-favor-bess-solid-state-transformers/"], "s": "Rosendin 旗下 Mazzetti 指出：数据中心建设成本约 1,300 万美元/MW，转向 SST 与中压 UPS 可砍掉约三分之二的传统变换环节；Enphase、SolarEdge 等光伏逆变器厂商的已验证硬件在技术上可行，SST 趋势可能引发对小型电力电子公司的并购潮。"}]}, {"id": "components", "name": "零部件与上游", "items": [{"d": "2026-09-10", "dd": "2026-09-08/09-10", "src": "网易 / 新浪财经（国际能源网）", "t": "英飞凌 1200V Easy SiC 模块导入伊顿 MV SST 2.0 平台", "urls": ["https://www.163.com/dy/article/L6BFVIDC05568W0A.html", "https://finance.sina.com.cn/stock/stockzmt/2026-09-10/doc-iniritas5393136.shtml"], "s": "2026 年 9 月 4 日伊顿官宣深化与英飞凌合作，英飞凌 1200V Easy™ SiC 功率模块导入伊顿 800VDC 中压固态变压器（MV SST）2.0 平台，由伊顿深圳团队研发制造，面向亚太/欧洲/中东非市场。双方还将基于 EasyPACK™ 2C 系列 2.3kV、3.3kV SiC 模块开发下一代 SST 平台。这是英飞凌 9 个月内在 SST 赛道的第四次出手（SolarEdge→DG Matrix→为光能源→伊顿），并预测未来五年全球 SST 半导体市场规模达 10 亿美元。"}, {"d": "2026-09-11", "dd": "2026-09-11", "src": "同花顺 iNews / 华润微公告（新浪）", "t": "华润微：SiC MOS 已在 SST 领域实现供货", "urls": ["http://yuanchuang.10jqka.com.cn/20260911/c679824747.shtml", "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=688396&id=12427499"], "s": "华润微表示 SiC MOS 在 SST 领域已实现供货；单管与模块覆盖 650V–2300V，3300V SiC MOS 在研。封装完成 Easy 系列、62mm、ED3 布局；1200V Easy2B 4mΩ 模块已出样，AUX 电源用 1700V/2300V 器件规格齐全，覆盖单相 500V–1.5kV 交流输入场景。"}, {"d": "2026-08-21", "dd": "2026-08-19/08-21", "src": "Power Electronics News / Benzinga 财报电话会纪要", "t": "Wolfspeed 发布 3.3kV SiC 模块家族（PCIM 2026），Q4 财报披露 SST/AI 数据中心进展", "urls": ["https://www.powerelectronicsnews.com/wolfspeed-debuts-high-power-sic-modules-at-pcim-2026/", "https://www.benzinga.com/news/26/08/61317968/wolfspeed-q4-2026-earnings-call-transcript"], "s": "Wolfspeed 推出两个 3.3kV SiC 模块家族（LM 平台高功率半桥带底板模块 >800A；WolfPACK 无底板全桥模块，支持多级/串联/并联配置，明确适用于 SST 与模块化可再生能源系统），基于 Gen 4 SiC 平台，号称开关损耗比竞品 SiC 低 42%、比 IGBT 低 90%+。财报会披露：AI 数据中心收入环比 +20%、2026 财年翻倍；获光宝、麦格米特等设计订单；与多家 SST 公司合作，主要供应 2.3kV 和 3.3kV 模块；10kV SiC MOSFET 已具备商用条件并与 GE Aerospace 签 MOU；成立硅谷数据中心解决方案团队。", "hl": 1}, {"d": "2026-09-01", "dd": "2026-08-27/09-01", "src": "电子工程专辑 / NE时代", "t": "中车时代电气亮相 2300V/3300V/6500V 高压 SiC 模块及 SST 专用模块（PCIM Asia 2026）", "urls": ["https://www.eet-china.com/mp/a520729.html", "https://www.ne-time.cn/web/article/39564"], "s": "PCIM Asia 2026（深圳，8月26-28日）上，中车时代电气/时代半导体展出 2300V/3300V/6500V 高压 SiC 模块与 SST 用 SiC 模块，以及车用/轨交用 8 英寸 SiC 晶圆，并作高压 SiC 器件技术报告。三菱电机展出第 5 代沟槽栅 SiC-MOSFET 裸芯片（2026 年 6 月起供样）；赛晶科技展示 2300V 30mΩ SiC 芯片与 1200V/2300V Easy 封装模块。"}, {"d": "2026-08-26", "dd": "2026-08-26", "src": "证券之星（2026 中报解读）", "t": "斯达半导推出 SST 用 2300V/3300V 高压 SiC MOSFET 芯片", "urls": ["https://stock.stockstar.com/RB2026082600029058.shtml"], "s": "斯达半导 2026 中报显示，新兴行业方向推出适用于 SST 场景的 2300V/3300V 高压 SiC MOSFET 芯片及 3300V/4500V 高压 IGBT 芯片；AI 服务器电源产品线覆盖 100V/650V GaN HEMT、低压 MOS、DrMOS 等，下游涵盖 PSU、IBC、Hotswap、VRM。"}, {"d": "2026-08-24", "dd": "2026-08-19/08-24", "src": "新浪财经 / 中关村天合宽禁带联盟", "t": "清纯半导体：SST 用 2300V/3300V 高压 SiC 芯片进入测试验证", "urls": ["https://finance.sina.com.cn/tech/roll/2026-08-19/doc-ininwiep9296411.shtml"], "s": "清纯半导体器件已在标杆客户 ±400V/800V HVDC 项目大批量出货；大功率 UPS、巴拿马电源、SSCB、SST 项目在国内外头部客户导入验证中；面向 SST 的 2300V、3300V 高压 SiC 芯片进入测试验证阶段。第三代 8 英寸 SiC MOSFET 将于 2026Q3 推向市场。"}, {"d": "2026-08-18", "dd": "2026-08-14/08-18", "src": "电子工程专辑 / 与非网（行家说）", "t": "爱仕特获数亿元融资，推出 SST 全套 SiC 器件方案", "urls": ["https://www.eet-china.com/mp/a516967.html", "https://www.eefocus.com/article/2069787.html"], "s": "爱仕特获数亿元融资，总部与新 SiC 产线落地杭州，确立“新能源+AIDC”双引擎战略。针对 AIDC 专用 SST 推出 650V–1700V 全电压等级器件方案，可搭配 62mm、MEP、MED 封装，匹配 AC-DC/DC-DC/DC-AC 全链路。援引数据：单套 35kV/10MW SST 若用 1200V SiC MOS 需 1440 颗器件；截至 2026 年 7 月国内外超 30 家企业公布 SST 进展。"}, {"d": "2026-08-27", "dd": "2026-08-27", "src": "搜狐（产业报道）", "t": "宏微科技：2300V SiC 已流片、3300V 器件下线，布局 10kV", "urls": ["https://www.sohu.com/a/1068380242_121124378"], "s": "宏微科技与北美头部电力设备客户在 UPS、定制服务器电源、SST 多领域合作，SST 处于样机研制阶段；2300V SiC 已流片、3300V 器件研发下线，与怀柔国家实验室合资成立宏微怀实布局 10kV SiC。SST 整机成本中 SiC 功率半导体占 25%–40%，为价值量最高部件；QYResearch 预测全球 SST 市场 2025 年 100 亿元增至 2030 年 1035 亿元。"}, {"d": "2026-08-17", "dd": "2026-08-17", "src": "腾讯新闻 / NE时代", "t": "芯联集成：SiC 650V–3.3kV 矩阵量产，6.5kV/10kV 在研", "urls": ["https://news.qq.com/rain/a/20260817A07VD400"], "s": "芯联集成首次半年度盈利，第四代 SiC 芯片及模块量产，形成 650V–3.3kV 产品矩阵，6.5kV 与 10kV 产品开发中；全年 SiC 收入预计约 30 亿元（接近翻倍）。报道指出 SST 高压 SiC 器件占整机价值量比重有望接近 40%。"}, {"d": "2026-08-14", "dd": "2026-08-14", "src": "华泰证券电新深度（股票复盘网转载）", "t": "华泰研究：SST 前端需 2300–6500V SiC，3300V–10kV 器件是当前卡点", "urls": ["https://www.fupanwang.com/kplart_info/997281.html"], "s": "SST 前端 AC-DC 通常需 2300–6500V 耐压 SiC 器件（甚至 10kV），后端 DC-DC 可用 1200–2000V；当前商用 SiC MOSFET 多在 650V–2300V，仅少数企业量产 3300V。超高压器件三大挑战：100μm+ 厚外延缺陷（良率仅 80–85%）、栅氧可靠性（>3MV/cm 需 10 万小时验证）、大尺寸芯片一致性。高压 SiC 高 dv/dt（10kV 器件开通 dv/dt 达 100V/ns）对隔离驱动提出 10–20kV 隔离耐压要求。"}, {"d": "2026-09-07", "dd": "2026-09-02/09-06/09-07", "src": "ewsemi.com / 嘉立创技术沙龙 / NewdPower", "t": "技术解析：SST 主流拓扑 = CHB/MMC 前级 + DAB/LLC 隔离级", "urls": ["https://www.ewsemi.com/NewsDetail/8606473.html", "https://newdpower.cloud/articles/20260907-solid-state-transformer.html"], "s": "多篇技术文章确认 SST 工程主流架构：中压 AC/DC 级采用 CHB（级联 H 桥）或 MMC；隔离 DC/DC 级普遍采用 DAB（双有源桥）或 LLC，DAB 多以 ISOP 形式级联，可用变压器漏感作滤波电感、移相控制调功。ISOP 模块化带来冗余容错（故障模块毫秒级旁路），但 SiC 器件参数分散性与磁件近饱和设计对均压均流控制提出极高要求。"}, {"d": "2026-08-25", "dd": "2026-08-25", "src": "北极星招聘", "t": "双杰电气等招聘印证 DAB/高频磁件人才需求旺盛", "urls": ["https://mhr.bjx.com.cn/jobs/1361868.html"], "s": "双杰电气招聘 SST 研发工程师，聚焦中高频隔离 DC-DC 功率单元（DAB、LLC 拓扑），负责高频变压器/磁元件设计（磁芯选型、绕组、损耗分析）与移相控制/谐振软开关策略。侧面反映整机厂对后级 DC-DC 与 MFT 设计资源的争夺。"}, {"d": "2026-09-01", "dd": "2026-09-01", "src": "OFweek（新思界产业研究）", "t": "高频隔离变压器约占 SST 成本 20%，纳米晶为优选铁心材料", "urls": ["https://instrument.ofweek.com/2026-09/ART-8320089-8420-30701087.html"], "s": "高频隔离变压器是 SST 核心组件，成本约占整机 20%，绝缘与局放要求严苛、定制化壁垒高。铁心材料以铁氧体、纳米晶为主，纳米晶兼具优异软磁性能与低涡流损耗，为优选。国内相关厂商：京泉华、新特电气、伊戈尔、新风光；纳米晶铁心材料供应商：安泰创明、青岛云路、安泰科技。《柔性直流系统用中高频隔离变压器技术规范》等标准制定中。"}, {"d": "2026-08-15", "dd": "2026-08-15", "src": "财联社（SST China 2026 大会报道）", "t": "财联社：SST 高频变压器以铁氧体为主，成本接近 SiC 模块", "urls": ["https://www.cls.cn/detail/2455134"], "s": "高频变压器在 SST 中成本占比接近 SiC 模块（SiC 模块约占整机 25%–30%）；无法使用工频硅钢，铁氧体为主要磁性材料，因企业标准不一需单独开模、小批量生产，价格居高。多层屏蔽、伞裙出线端绝缘结构成主流方案以抑制局部放电。四大核心部件（SiC 器件、高频变压器、薄膜电容、热管理）国产替代提速。"}, {"d": "2026-08-21", "dd": "2026-08-21", "src": "电子变压器与电感网（big-bit）", "t": "伊戈尔：数据中心磁性件业务高增，发布 JUNO 系列 SST", "urls": ["https://www.big-bit.com/wap/news/405958.html"], "s": "伊戈尔 2026H1 数据中心业务同比 +310%，境外收入占比升至 48%。产品层次从移相变压器扩展到 PST（800V DC）与 SST——2026 年 4 月发布面向 AIDC 的君诺 JUNO 系列固态变压器。文章指出 SST 内部中高频磁件需解决高频损耗、高 dv/dt 绝缘应力、局部放电、功率密度散热与批量一致性问题。另据报道京泉华供货伊顿 SST 的高频变压器（来源可信度较低，股吧类信息，需谨慎）。"}, {"d": "2026-09-10", "dd": "2026-09-09/09-10", "src": "wedoany / compoundsemiconductor.net", "t": "SolarEdge×英飞凌扩展合作：基于 CoolSiC JFET 开发 800VDC SSCB", "urls": ["https://www.wedoany.com/shortnews/471325.html", "https://compoundsemiconductor.net/article/125332/Infineon_and_SolarEdge_extend_collaboration"], "s": "9 月 9 日 SolarEdge 与英飞凌宣布在既有 SST 合作（2–5MW 模块化单元，13.8–34.5kV 直转 800–1500VDC）基础上新增 SSCB 开发：SolarEdge 负责方案设计，英飞凌提供 CoolSiC JFET 器件，布置于 SST 与计算机架之间，故障切断时间数微秒，无机械触点。同期英飞凌还向西门子 SENTRON 3QD2 半导体断路器供应 SiC 模块。"}, {"d": "2026-09-04", "dd": "2026-08-25/08-26/09-04", "src": "雪球（中期业绩交流）/ 赛晶官网 / 艾邦", "t": "赛晶科技：SSCB 与 2300V SiC 双线布局数据中心", "urls": ["https://xueqiu.com/9239060722/406591910", "https://www.sunking-tech.com/Company-News/824.html"], "s": "赛晶科技（Astrol/SwissSEM）推出 B 平台固态断路器，适配 800V 数据中心直流系统，电流 125A–10000A，微秒级分断（2μs 检测、4μs 关断），数据中心版本 2026 年底交付首批样机，嘉善产线 2027 年前后投产；已与 10 余家欧美企业进入样品/量产谈判。同时开发 SST 用 2300V SiC 芯片与模块；2026 纽伦堡首发 2300V XP 高压模块、1200V/1400V Easy2B、1200V ED Pin-Fin 模块。"}, {"d": "2026-08-27", "dd": "2026-08-24/08-27", "src": "观研报告网 / 固态断路器市场调研纪要", "t": "行业报告：800V HVDC 下 SSCB 从“可选”变为“刚性标配”", "urls": ["https://m.chinabaogao.com/detail/809843.html", "https://www.mffb.com.cn/news/show-678231.html"], "s": "800V HVDC 下故障电流上升速率达数万 A/ms，SiC 器件过流耐受仅数百微秒，机械断路器 3–5ms 响应来不及动作；SSCB 分断 <10μs、无电弧、寿命 100 万次以上，采用 SiC MOSFET 并支持 IEC60947-10 数字化通信，正成为 AIDC 刚性标配。SPD/EMI/CT 方向本轮未检索到 SST 专项动态。"}, {"d": "2026-09-04", "dd": "2026-09-04", "src": "DatacenterDynamics", "t": "NVIDIA 与伙伴共建 800V HVDC 供电体系，英飞凌/ST/TI 供芯片", "urls": ["https://www.datacenterdynamics.com/en/news/nvidia-working-with-data-center-partners-to-build-800v-hvdc-power-systems/"], "s": "NVIDIA 正与数据中心设备商合作开发支持 1MW+ 机柜的 800V HVDC 供电系统：芯片伙伴 Infineon、ST、TI；电源系统伙伴 Delta、Flex Power；电力系统伙伴 Eaton、Schneider、Vertiv。架构在 GPU 板级完成 AC/DC 转换，减少中间变换环节。另有生态清单含 Navitas、onsemi、ROHM、Power Integrations 等。"}, {"d": "2026-09-13", "dd": "2026-09-13", "src": "新浪（专栏）", "t": "伊顿 MV SST 2.0 技术剖面：全 SiC、效率 98.5%、2.5MW", "urls": ["https://k.sina.com.cn/article_3242158197_c13f687500101s2qm.html"], "s": "伊顿 MV SST 2.0 采用全 SiC 功率模块与内置高频隔离变压器，10kV 交流直转 800V 直流，单套 2.5MW，功率密度 278kW/m²，全链路效率 98.5%，节省占地 40%+，42kV 绝缘耐压/75kV 雷击测试，N+1 模块冗余。文章指出 SiC 衬底成本年降 15%–20%，伊戈尔等磁件商以铁氧体+非晶纳米晶垂直整合保障供应。"}, {"d": "2026-08-23", "dd": "2026-08-17/08-23", "src": "visenchups / 36氪", "t": "SST 商业化元年：40+ 厂商推产品，成本降至 280–380 美元/kVA", "urls": ["https://www.visenchups.com/news/solid-state-transformer-goes-commercial-the-800v-dc-power-revolution-for-ai-data-centers-385151.html", "https://eu.36kr.com/zh/p/3951951551691905"], "s": "2026 下半年 SST 走出实验室：阳光电源 EnerNeo、智光电气 4.2MW Coota、台达等 40+ 厂商发布产品并签示范订单。SST 系统成本从 2022 年 >800 美元/kVA 降至 2025 年约 280–380 美元/kVA，2028 年有望触及 150 美元/kVA；但目前单台仍超 400 万元（巴拿马电源约 200 万元），高压 SiC 长期可靠性仍待验证。"}, {"d": "2026-08-23", "dd": "2026-08-23（原文 2026-04-22）", "src": "Mgrid.org", "t": "Wolfspeed 200mm SiC 晶圆产能被视为 2026 年 SST 最大外部瓶颈", "urls": ["https://mgrid.org/2026/04/22/wolfspeeds-200mm-silicon-carbide-wafer-capacity-is-the-single-biggest-2026-bottleneck-on-solid-state-transformer-production/"], "s": "除三菱电机外，Wolfspeed 是主导 SiC 供应商；其 200mm 产能爬坡（Mohawk Valley 目标 2026 年满产、Siler City 晶圆厂 2025H2–2026 放量）被视为整个 SST 制造扩张的最大外部约束。同站还报道 onsemi EliteSiC 为 SST 行业第三大 SiC 供应商。"}, {"d": "2026-09-01", "dd": "2026-08-26/09-01", "src": "搜狐 / 网易", "t": "800V HVDC 三条落地路线，SST 为“终极方案”", "urls": ["https://www.sohu.com/a/1067617636_121124371", "https://www.163.com/dy/article/L5QEP1E905312NX9.html"], "s": "800V HVDC 落地分集中式（浪潮/中兴/华为已商用）、Sidecar 边柜（NVIDIA 主推）、SST 直供（下一代终极方案）三条路线。SST 可将 800V 转换效率推至 98%+。厂商节奏：伊顿最快 2027 年产品落地，GE Vernova 预计 2027 年首批商业订单，台达已有小型数据中心客户试用，光宝科样品 2026Q1 推出。"}, {"d": "2026-09-11", "dd": "2026-09-11", "src": "AIHVDC.com（转 Circuit Cellar / eepower）", "t": "Power Integrations 展示 2200V PowiGaN；大电流 SiC 模块赋能多兆瓦 SST 分析发布", "urls": ["https://aihvdc.com/zh/news"], "s": "Power Integrations 宣布 PowiGaN 技术耐压达 2200V，面向下一代高压电源转换与 AI 数据中心供电；eepower 发布技术分析，探讨大电流 SiC 功率模块集成到多兆瓦 SST 架构、中压直转 800VDC 的设计方案。（聚合站信息，建议需要时回溯原始出处）"}, {"d": "2026-09-07", "dd": "2026-08-25/09-07（事件时间见内文）", "src": "半导体产业网 / Yahoo Finance 新闻列表", "t": "Navitas 入选 NVIDIA 800V HVDC 架构；Wolfspeed 与光宝合作 800VDC", "urls": ["http://www.casmita.com/news/202505/22/18902.html", "https://finance.yahoo.com/quote/WOLF/press-releases/"], "s": "纳微（Navitas）以 GaNFast+GeneSiC 参与 NVIDIA 800V HVDC 架构，并推出 2300/3300V SiC SST 模块（Computex 2026 展示）。Wolfspeed 与 LITEON（光宝）达成 800VDC 电源战略合作，并发布“业界最低 RDS(on)”的新一代 SiC MOSFET。"}, {"d": "2026-08-16", "dd": "2026-08-16", "src": "Global Info Research", "t": "市场规模：AI 数据中心 SST 2025 年约 3600 万美元，2032 年 16 亿美元（CAGR 64.5%）", "urls": ["https://www.globalinforesearch.com.cn/reports/3190752/solid-state-transformers-for-ai-data-centers"], "s": "GIR 测算 2025 年全球 AIDC 用 SST 收入约 3601 万美元，2032 年达 16.08 亿美元；产品接入 10–35kV 中压，输出 800VDC/±400VDC，单机 1–5MW，综合毛利率约 35%。另 Grand View Research 口径：2024 年全球 SST 约 1.69 亿美元，2030 年 9.36 亿美元。"}]}]}</script>
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('sst-data').textContent);
+  var REF = new Date(DATA.refDate + 'T23:59:59+08:00');
+  var WEEK_MS = 7 * 24 * 3600 * 1000;
+
+  var state = { tab: DATA.sections[0].id, kw: '', range: 'all' };
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function hostOf(u){ try { return new URL(u).hostname.replace(/^www\./,''); } catch(e){ return u; } }
+  function hi(s, kw){
+    s = esc(s);
+    if(!kw) return s;
+    var k = esc(kw).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try { return s.replace(new RegExp('(' + k + ')', 'gi'), '<mark>$1</mark>'); } catch(e){ return s; }
+  }
+  function within7(it){
+    var t = new Date(it.d + 'T00:00:00+08:00');
+    return !isNaN(t) && (REF - t) <= WEEK_MS && t <= REF;
+  }
+  function matchKw(it, kw){
+    if(!kw) return true;
+    kw = kw.toLowerCase();
+    return (it.t + ' ' + it.s + ' ' + it.src).toLowerCase().indexOf(kw) >= 0;
+  }
+
+  /* stats */
+  var total = 0;
+  var statsHtml = DATA.sections.map(function(sec){
+    total += sec.items.length;
+    var cls = sec.id === 'global' ? 's-global' : (sec.id === 'components' ? 's-comp' : '');
+    return '<div class="stat ' + cls + '"><div class="num">' + sec.items.length + '</div><div class="lbl">' + esc(sec.name) + '</div></div>';
+  }).join('');
+  statsHtml += '<div class="stat s-total"><div class="num">' + total + ' <small>条</small></div><div class="lbl">本期收录总量</div></div>';
+  document.getElementById('stats').innerHTML = statsHtml;
+
+  /* headlines */
+  var hlBox = document.getElementById('headlines');
+  var hlHtml = '';
+  DATA.sections.forEach(function(sec){
+    sec.items.forEach(function(it){
+      if(!it.hl) return;
+      hlHtml += '<div class="hl-card">'
+        + '<span class="badge">头条</span><span class="sec-tag">' + esc(sec.name) + '</span>'
+        + '<h3><a href="' + esc(it.urls[0]) + '" target="_blank" rel="noopener noreferrer">' + esc(it.t) + '</a></h3>'
+        + '<p>' + esc(it.s) + '</p>'
+        + '<div class="meta"><span>' + esc(it.d) + '</span><span>' + esc(hostOf(it.urls[0])) + '</span></div>'
+        + '</div>';
+    });
+  });
+  hlBox.innerHTML = hlHtml;
+
+  /* tabs */
+  var tabsBox = document.getElementById('tabs');
+  tabsBox.innerHTML = DATA.sections.map(function(sec){
+    return '<button class="tab" data-tab="' + sec.id + '">' + esc(sec.name) + '<span class="cnt">' + sec.items.length + '</span></button>';
+  }).join('');
+
+  /* feeds skeleton */
+  var feedsBox = document.getElementById('feeds');
+  feedsBox.innerHTML = DATA.sections.map(function(sec){
+    return '<section class="feed" id="feed-' + sec.id + '">'
+      + '<div class="feed-head"><h2>' + esc(sec.name) + '</h2><span class="cnt"></span><span class="scope"></span></div>'
+      + '<div class="cards"></div><div class="empty">当前筛选条件下暂无条目，试试切换「全部」或修改关键词。</div>'
+      + '</section>';
+  }).join('');
+
+  function cardHtml(it, kw){
+    var recent = within7(it);
+    var links = it.urls.map(function(u, i){
+      return '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">↗ ' + esc(hostOf(u)) + (it.urls.length > 1 ? ' [' + (i+1) + ']' : '') + '</a>';
+    }).join('');
+    return '<article class="card">'
+      + '<div class="top"><span class="date-badge' + (recent ? '' : ' old') + '">' + esc(it.dd) + '</span><span class="src">' + hi(it.src, kw) + '</span></div>'
+      + '<h3><a href="' + esc(it.urls[0]) + '" target="_blank" rel="noopener noreferrer">' + hi(it.t, kw) + '</a></h3>'
+      + '<div class="sum">' + hi(it.s, kw) + '</div>'
+      + '<div class="links">' + links + '</div>'
+      + '</article>';
+  }
+
+  function render(){
+    DATA.sections.forEach(function(sec){
+      var feed = document.getElementById('feed-' + sec.id);
+      feed.classList.toggle('show', sec.id === state.tab);
+      var list = sec.items.filter(function(it){
+        return (state.range === 'all' || within7(it)) && matchKw(it, state.kw);
+      });
+      list.sort(function(a, b){ return (b.d || '').localeCompare(a.d || ''); });
+      var cards = feed.querySelector('.cards');
+      cards.innerHTML = list.map(function(it){ return cardHtml(it, state.kw); }).join('');
+      feed.querySelector('.empty').style.display = list.length ? 'none' : 'block';
+      var n7 = sec.items.filter(within7).length;
+      feed.querySelector('.cnt').textContent = list.length + ' / ' + sec.items.length + ' 条';
+      feed.querySelector('.scope').textContent = state.range === '7'
+        ? '仅显示最近 7 天（本板块共 ' + n7 + ' 条）'
+        : '显示全部，按日期倒序';
+    });
+    document.querySelectorAll('.tab').forEach(function(t){
+      t.classList.toggle('active', t.dataset.tab === state.tab);
+    });
+    document.querySelectorAll('.range-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.range === state.range);
+    });
+  }
+
+  tabsBox.addEventListener('click', function(e){
+    var t = e.target.closest('.tab'); if(!t) return;
+    state.tab = t.dataset.tab; render();
+  });
+  document.querySelector('.range-toggle').addEventListener('click', function(e){
+    var b = e.target.closest('.range-btn'); if(!b) return;
+    state.range = b.dataset.range; render();
+  });
+  var kwInput = document.getElementById('kw'), kwClear = document.getElementById('kwClear');
+  kwInput.addEventListener('input', function(){
+    state.kw = kwInput.value.trim();
+    kwClear.style.display = state.kw ? 'block' : 'none';
+    render();
+  });
+  kwClear.addEventListener('click', function(){
+    kwInput.value = ''; state.kw = ''; kwClear.style.display = 'none'; render(); kwInput.focus();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
